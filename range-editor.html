@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Floppy – Editor de Rangos</title>
+<style>
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:16px}
+  h1{margin:0 0 12px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+  select,button,textarea,input{font-size:16px}
+  .grid{display:grid;grid-template-columns:repeat(13,28px);gap:4px;margin-top:8px}
+  .cell{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:4px;background:#eee;cursor:pointer;font-size:11px;user-select:none}
+  .raise{background:#ffb3b3}
+  .call{background:#b9e7c0}
+  .fold{background:#ddd;color:#777}
+  .legend{display:flex;gap:8px;margin:8px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .swatch{width:14px;height:14px;border-radius:3px;display:inline-block}
+  textarea{width:100%;height:160px}
+  .wrap{max-width:900px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Editor de Rangos 13×13</h1>
+
+<div class="row">
+  <label>Rango:
+    <select id="rangeSel"></select>
+  </label>
+  <button id="exportBtn">Exportar JSON</button>
+  <button id="clearBtn">Vaciar</button>
+</div>
+
+<div class="legend">
+  <span><span class="swatch raise"></span> Raise</span>
+  <span><span class="swatch call"></span> Call</span>
+  <span><span class="swatch fold"></span> Fold</span>
+</div>
+
+<div id="grid" class="grid"></div>
+
+<h3>Vista previa JSON</h3>
+<textarea id="out" readonly></textarea>
+</div>
+
+<script>
+const HANDS_O = ["A","K","Q","J","T","9","8","7","6","5","4","3","2"];
+const SUITED = (a,b)=> a===b? a+a : (HANDS_O.indexOf(a)<HANDS_O.indexOf(b)? a+b+"s" : b+a+"o");
+const PAIRS = HANDS_O.map(r=>r+r);
+
+// paquete base (los 20 metadatos)
+const pkg = /* pega aquí el JSON del paquete base si quieres incrustarlo; si no, cargará el archivo floppy-100bb-6max.json */;
+let ranges = [];
+
+async function loadBase(){
+  try{
+    const res = await fetch('floppy-100bb-6max.json',{cache:'no-store'});
+    const base = await res.json();
+    ranges = base.ranges.map(r=>({...r, combos: {...(r.combos||{})}}));
+  }catch(e){
+    // fallback: si no existe el archivo en el repo, usa el objeto pkg si lo pegaste arriba
+    if(pkg && pkg.ranges){ ranges = pkg.ranges.map(r=>({...r, combos:{}})); }
+  }
+  initUI();
+}
+
+const gridEl = document.getElementById('grid');
+const rangeSel = document.getElementById('rangeSel');
+const out = document.getElementById('out');
+
+function initUI(){
+  rangeSel.innerHTML = ranges.map((r,i)=>`<option value="${i}">${r.title}</option>`).join('');
+  buildGrid();
+  rangeSel.onchange = buildGrid;
+  document.getElementById('exportBtn').onclick = exportJSON;
+  document.getElementById('clearBtn').onclick = () => { current().combos = {}; buildGrid(); };
+}
+
+function current(){ return ranges[parseInt(rangeSel.value||0,10)]; }
+
+function buildGrid(){
+  gridEl.innerHTML = '';
+  const r = current();
+  // genera matriz 13x13 de nombres de mano en orden estándar
+  for(let i=0;i<13;i++){
+    for(let j=0;j<13;j++){
+      const hi = HANDS_O[i], lo = HANDS_O[j];
+      let hand;
+      if(i===j){ hand = hi+hi; }
+      else if(i<j){ hand = hi+lo+"s"; } // suited arriba de diagonal
+      else { hand = lo+hi+"o"; }        // offsuit bajo diagonal
+      const act = r.combos[hand] || "Fold";
+      const div = document.createElement('div');
+      div.className = 'cell ' + cls(act);
+      div.textContent = label(hand);
+      div.dataset.hand = hand;
+      div.onclick = () => {
+        // ciclo: Fold -> Call -> Raise -> Fold
+        const now = r.combos[hand] || "Fold";
+        const next = now==="Fold" ? "Call" : (now==="Call" ? "Raise" : "Fold");
+        r.combos[hand] = next==="Fold" ? undefined : next;
+        if(next==="Fold") delete r.combos[hand];
+        div.className = 'cell ' + cls(next);
+        renderPreview();
+      };
+      gridEl.appendChild(div);
+    }
+  }
+  renderPreview();
+}
+
+function cls(a){ return a==="Raise"?"raise":(a==="Call"?"call":"fold"); }
+function label(h){ return h.length===2?h:h.toUpperCase(); }
+
+function exportJSON(){
+  const pack = {
+    package: {
+      id: "floppy-100bb-6max-v1",
+      name: "Preflop 100BB (6-max) – Final",
+      version: "1.0",
+      format: "cash",
+      table_size: 6,
+      author: "JP"
+    },
+    ranges: ranges
+  };
+  const blob = new Blob([JSON.stringify(pack,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'floppy-100bb-6max-FINAL.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function renderPreview(){
+  const pack = { package:{id:"floppy-100bb-6max-v1"}, ranges: [current()] };
+  out.value = JSON.stringify(pack,null,2);
+}
+
+loadBase();
+</script>
+</body>
+</html>
