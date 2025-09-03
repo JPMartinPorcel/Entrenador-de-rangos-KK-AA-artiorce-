@@ -1,0 +1,36 @@
+{
+  "package": {
+    "id": "floppy-100bb-6max-v1",
+    "name": "Preflop 100BB (6-max) – Base",
+    "version": "1.0",
+    "format": "cash",
+    "table_size": 6,
+    "author": "JP"
+  },
+  "ranges": [
+    { "id":"bb-vs-utg-100", "title":"BB vs UTG 100BB (6-max)", "format":"cash", "table_size":6, "stack_bb":100, "position":"BB", "scenario":"defend_blind", "villain_position":"UTG", "encoding":"list", "combos":{}, "notes":"Facing raise from UTG" },
+    { "id":"bb-vs-hj-100",  "title":"BB vs HJ 100BB (6-max)",  "format":"cash", "table_size":6, "stack_bb":100, "position":"BB", "scenario":"defend_blind", "villain_position":"HJ",  "encoding":"list", "combos":{}, "notes":"Facing raise from HJ" },
+    { "id":"bb-vs-co-100",  "title":"BB vs CO 100BB (6-max)",  "format":"cash", "table_size":6, "stack_bb":100, "position":"BB", "scenario":"defend_blind", "villain_position":"CO",  "encoding":"list", "combos":{}, "notes":"Facing raise from CO" },
+    { "id":"bb-vs-btn-100", "title":"BB vs BTN 100BB (6-max)", "format":"cash", "table_size":6, "stack_bb":100, "position":"BB", "scenario":"defend_blind", "villain_position":"BTN", "encoding":"list", "combos":{}, "notes":"Facing raise from BTN" },
+    { "id":"bb-vs-sb-100",  "title":"BB vs SB 100BB (6-max)",  "format":"cash", "table_size":6, "stack_bb":100, "position":"BB", "scenario":"defend_blind", "villain_position":"SB",  "encoding":"list", "combos":{}, "notes":"Facing raise from SB" },
+
+    { "id":"sb-vs-utg-100", "title":"SB vs UTG 100BB (6-max)", "format":"cash", "table_size":6, "stack_bb":100, "position":"SB", "scenario":"vs_open", "villain_position":"UTG", "encoding":"list", "combos":{}, "notes":"Facing raise from UTG" },
+    { "id":"sb-vs-hj-100",  "title":"SB vs HJ 100BB (6-max)",  "format":"cash", "table_size":6, "stack_bb":100, "position":"SB", "scenario":"vs_open", "villain_position":"HJ",  "encoding":"list", "combos":{}, "notes":"Facing raise from HJ" },
+    { "id":"sb-vs-co-100",  "title":"SB vs CO 100BB (6-max)",  "format":"cash", "table_size":6, "stack_bb":100, "position":"SB", "scenario":"vs_open", "villain_position":"CO",  "encoding":"list", "combos":{}, "notes":"Facing raise from CO" },
+    { "id":"sb-vs-btn-100", "title":"SB vs BTN 100BB (6-max)", "format":"cash", "table_size":6, "stack_bb":100, "position":"SB", "scenario":"vs_open", "villain_position":"BTN", "encoding":"list", "combos":{}, "notes":"Facing raise from BTN" },
+    { "id":"sb-rfi-100",    "title":"RFI SB 100BB (6-max)",    "format":"cash", "table_size":6, "stack_bb":100, "position":"SB", "scenario":"RFI",     "villain_position":null, "encoding":"list", "combos":{}, "notes":"Raise first in desde SB" },
+
+    { "id":"utg-rfi-100",   "title":"RFI UTG 100BB (6-max)",   "format":"cash", "table_size":6, "stack_bb":100, "position":"UTG", "scenario":"RFI",     "villain_position":null, "encoding":"list", "combos":{}, "notes":"Raise first in" },
+    { "id":"hj-rfi-100",    "title":"RFI HJ 100BB (6-max)",    "format":"cash", "table_size":6, "stack_bb":100, "position":"HJ",  "scenario":"RFI",     "villain_position":null, "encoding":"list", "combos":{}, "notes":"Raise first in" },
+    { "id":"hj-vs-utg-100", "title":"HJ vs UTG 100BB (6-max)", "format":"cash", "table_size":6, "stack_bb":100, "position":"HJ",  "scenario":"vs_open", "villain_position":"UTG", "encoding":"list", "combos":{}, "notes":"Facing raise from UTG" },
+
+    { "id":"co-rfi-100",    "title":"RFI CO 100BB (6-max)",    "format":"cash", "table_size":6, "stack_bb":100, "position":"CO",  "scenario":"RFI",     "villain_position":null, "encoding":"list", "combos":{}, "notes":"Raise first in" },
+    { "id":"co-vs-utg-100", "title":"CO vs UTG 100BB (6-max)", "format":"cash", "table_size":6, "stack_bb":100, "position":"CO",  "scenario":"vs_open", "villain_position":"UTG", "encoding":"list", "combos":{}, "notes":"Facing raise from UTG" },
+    { "id":"co-vs-hj-100",  "title":"CO vs HJ 100BB (6-max)",  "format":"cash", "table_size":6, "stack_bb":100, "position":"CO",  "scenario":"vs_open", "villain_position":"HJ",  "encoding":"list", "combos":{}, "notes":"Facing raise from HJ" },
+
+    { "id":"btn-rfi-100",   "title":"RFI BTN 100BB (6-max)",   "format":"cash", "table_size":6, "stack_bb":100, "position":"BTN", "scenario":"RFI",     "villain_position":null, "encoding":"list", "combos":{}, "notes":"Raise first in" },
+    { "id":"btn-vs-utg-100","title":"BTN vs UTG 100BB (6-max)","format":"cash", "table_size":6, "stack_bb":100, "position":"BTN", "scenario":"vs_open", "villain_position":"UTG", "encoding":"list", "combos":{}, "notes":"Facing raise from UTG" },
+    { "id":"btn-vs-hj-100", "title":"BTN vs HJ 100BB (6-max)", "format":"cash", "table_size":6, "stack_bb":100, "position":"BTN", "scenario":"vs_open", "villain_position":"HJ",  "encoding":"list", "combos":{}, "notes":"Facing raise from HJ" },
+    { "id":"btn-vs-co-100", "title":"BTN vs CO 100BB (6-max)", "format":"cash", "table_size":6, "stack_bb":100, "position":"BTN", "scenario":"vs_open", "villain_position":"CO",  "encoding":"list", "combos":{}, "notes":"Facing raise from CO" }
+  ]
+}
