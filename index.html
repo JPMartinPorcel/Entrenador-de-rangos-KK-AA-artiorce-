@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Floppy Card — Preflop Trainer (Offline)</title>
+
+  <!-- PWA -->
+  <meta name="theme-color" content="#0ea5e9" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Floppy Card" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+
+  <style>
+    :root{
+      --bg:#0b1220; --surface:#0f172a; --card:#111827; --text:#e5e7eb; --muted:#9ca3af;
+      --brand:#0ea5e9; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --mix:#a855f7; --call:#60a5fa;
+      --grid-border: rgba(255,255,255,.08);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Helvetica,Arial,sans-serif;
+      color:var(--text); background:linear-gradient(180deg,#0b1220,#0f172a 60%);
+    }
+    a{color:var(--brand); text-decoration:none}
+    .topbar{
+      position:sticky; top:0; backdrop-filter:saturate(140%) blur(6px);
+      background:rgba(11,18,32,.7); border-bottom:1px solid rgba(255,255,255,.06);
+      display:flex; gap:10px; align-items:center; justify-content:space-between; padding:10px 12px; z-index:20;
+    }
+    .brand{display:flex; gap:10px; align-items:center}
+    .brand h1{font-size:18px; margin:0}
+    .chip{display:inline-flex; gap:6px; align-items:center; background:#0a0f1a; border:1px solid rgba(255,255,255,.08);
+      border-radius:999px; padding:6px 10px; font-size:12px}
+    .btn{appearance:none; border:none; border-radius:10px; padding:10px 14px; cursor:pointer;
+      background:linear-gradient(135deg,var(--ok),#16a34a); color:#07110a; font-weight:700;
+      box-shadow:0 8px 18px rgba(34,197,94,.25); transition:transform .05s ease}
+    .btn.secondary{background:linear-gradient(135deg,#60a5fa,#3b82f6); color:#07102a; box-shadow:0 8px 18px rgba(59,130,246,.25)}
+    .btn.warn{background:linear-gradient(135deg,#f59e0b,#d97706); color:#2b1703}
+    .btn.danger{background:linear-gradient(135deg,#f87171,var(--bad)); color:#240808; box-shadow:0 8px 18px rgba(239,68,68,.25)}
+    .btn:active{transform:translateY(1px)}
+    .container{max-width:1100px; margin:16px auto; padding:0 12px}
+    .tabs{display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 16px}
+    .tab{padding:8px 12px; border-radius:999px; border:1px solid var(--grid-border); background:rgba(255,255,255,.03); cursor:pointer}
+    .tab.active{background:var(--brand); color:#041016; border-color:transparent; font-weight:700}
+    .grid2{display:grid; gap:12px}
+    .card{
+      background:var(--card); border:1px solid var(--grid-border); border-radius:14px; padding:14px;
+      box-shadow:0 6px 24px rgba(0,0,0,.25);
+    }
+    label{display:block; font-weight:600; margin:8px 0 4px}
+    input[type="text"], input[type="number"], select, textarea{
+      width:100%; padding:10px 12px; border-radius:10px; background:#0a0f1a; color:#cbd5e1;
+      border:1px solid rgba(255,255,255,.12); outline:none
+    }
+    textarea{min-height:90px; resize:vertical}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .cols{display:grid; grid-template-columns:repeat(1,1fr); gap:12px}
+    @media(min-width:900px){ .cols{grid-template-columns:repeat(2,1fr)} }
+    table.matrix{border-collapse:collapse; width:100%; table-layout:fixed; font-size:12px}
+    .matrix th,.matrix td{border:1px solid var(--grid-border); text-align:center; padding:6px}
+    .matrix .hdr{background:#0a0f1a; color:var(--muted); position:sticky; top:0}
+    .legend{display:flex; flex-wrap:wrap; gap:8px}
+    .legend .swatch{display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border:1px solid var(--grid-border); border-radius:10px}
+    .F{background:#0b1220}
+    .C{background:#0b2a4a}
+    .R{background:#082a18}
+    .B3{background:#2a1e08}
+    .B4{background:#2a0b0b}
+    .MX{background:#1e1030}
+    .unknown{background:#121826; color:#64748b}
+    .muted{color:var(--muted)}
+    .center{text-align:center}
+    .empty{opacity:.7; text-align:center; padding:12px}
+    .code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; background:#0a0f1a; padding:10px; border-radius:10px}
+    .kpi{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
+    @media(min-width:720px){ .kpi{grid-template-columns:repeat(4,1fr)}}
+    .kpi .box{background:#0a0f1a; border:1px solid var(--grid-border); padding:10px; border-radius:12px; text-align:center}
+    .sticky-cta{position:sticky; bottom:10px; display:flex; gap:10px; background:rgba(15,23,42,.8); padding:10px; border-radius:12px; border:1px solid var(--grid-border)}
+    .question{font-size:18px; font-weight:700}
+    .answers{display:grid; gap:10px; margin-top:10px}
+    .answers .btn{width:100%}
+    .pill{display:inline-block; padding:4px 8px; border:1px solid var(--grid-border); border-radius:999px; font-size:12px; background:#0a0f1a}
+    .footer{opacity:.6; text-align:center; padding:18px}
+    @supports(padding:max(0px)){ body{padding-bottom:env(safe-area-inset-bottom)}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="pill">♠</span>
+      <h1>Floppy Card — Preflop (Offline)</h1>
+    </div>
+    <div class="row">
+      <span id="netStatus" class="chip">Estado: <strong>…</strong></span>
+      <button id="installBtn" class="btn secondary" hidden>Instalar</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="ranges">Rangos</button>
+      <button class="tab" data-tab="practice">Práctica</button>
+      <button class="tab" data-tab="exam">Examen</button>
+      <button class="tab" data-tab="history">Historial</button>
+      <button class="tab" data-tab="settings">Ajustes</button>
+      <button class="tab" data-tab="importexport">Importar/Exportar</button>
+    </nav>
+
+    <!-- RANGES -->
+    <section id="tab-ranges" class="grid2">
+      <div class="card">
+        <div class="row">
+          <div class="cols" style="width:100%">
+            <div>
+              <label>Formato</label>
+              <select id="filterFormat">
+                <option value="all">Todos</option>
+                <option value="cash">Cash</option>
+                <option value="mtt">MTT</option>
+              </select>
+            </div>
+            <div>
+              <label>Stack (BB)</label>
+              <select id="filterStack">
+                <option value="all">Todos</option>
+                <option>100</option><option>60</option><option>40</option><option>30</option><option>20</option>
+              </select>
+            </div>
+            <div>
+              <label>Posición héroe</label>
+              <select id="filterPos">
+                <option value="all">Todas</option>
+                <option>UTG</option><option>HJ</option><option>CO</option><option>BTN</option><option>SB</option><option>BB</option>
+              </select>
+            </div>
+            <div>
+              <label>Escenario</label>
+              <select id="filterScenario">
+                <option value="all">Todos</option>
+                <option value="RFI">RFI</option>
+                <option value="defend_blind">Defensa blinds</option>
+                <option value="vs_open">vs Open</option>
+                <option value="vs_3bet">vs 3-bet</option>
+                <option value="vs_4bet">vs 4-bet</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Lista de rangos</h3>
+        <div id="rangesList" class="grid2"></div>
+        <div id="rangesEmpty" class="empty" hidden>No hay rangos. Importa un paquete o usa los de ejemplo.</div>
+      </div>
+
+      <div class="card">
+        <h3>Grilla 13×13 (rango seleccionado)</h3>
+        <div class="row">
+          <select id="rangeSelect"></select>
+          <button id="btnActivateRange" class="btn secondary">Activar para entrenar</button>
+        </div>
+        <div class="legend" style="margin:10px 0">
+          <span class="swatch F">⬜ Fold</span>
+          <span class="swatch C" style="background:#0b2a4a">🟦 Call</span>
+          <span class="swatch R" style="background:#082a18">🟩 Raise</span>
+          <span class="swatch B3" style="background:#2a1e08">🟫 3-bet</span>
+          <span class="swatch B4" style="background:#2a0b0b">🟥 4-bet</span>
+          <span class="swatch MX" style="background:#1e1030">🟪 Mix</span>
+          <span class="swatch unknown">⬛ Sin dato</span>
+        </div>
+        <div id="matrixWrap"></div>
+        <div class="muted">Tip: toca una celda para ver la acción de esa mano.</div>
+      </div>
+    </section>
+
+    <!-- PRACTICE -->
+    <section id="tab-practice" class="grid2" hidden>
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <label>Rango activo</label>
+            <select id="activeRangeSelect"></select>
+          </div>
+          <div class="sticky-cta">
+            <button id="btnStartPractice" class="btn">Iniciar práctica</button>
+            <button id="btnReviewErrors" class="btn warn">Repasar fallos</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="practiceCard" class="card" hidden>
+        <div class="row" style="justify-content:space-between; align-items:flex-start">
+          <div>
+            <div class="pill" id="practiceMeta"></div>
+            <div class="question" id="qText" style="margin-top:8px">…</div>
+          </div>
+          <div class="pill" id="qCounter">0/0</div>
+        </div>
+        <div class="answers" id="answers"></div>
+        <div id="feedback" class="muted" style="margin-top:8px"></div>
+        <div class="row" style="margin-top:10px">
+          <button id="btnNext" class="btn secondary">Siguiente</button>
+          <button id="btnEndPractice" class="btn danger">Terminar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- EXAM -->
+    <section id="tab-exam" class="grid2" hidden>
+      <div class="card">
+        <div class="row">
+          <div>
+            <label>Rango activo</label>
+            <select id="examRangeSelect"></select>
+          </div>
+          <div>
+            <label>Nº preguntas</label>
+            <input id="examCount" type="number" min="5" max="200" value="20" />
+          </div>
+          <div>
+            <label>Tiempo límite (min, opcional)</label>
+            <input id="examMinutes" type="number" min="0" max="120" value="0" />
+          </div>
+          <div class="sticky-cta">
+            <button id="btnStartExam" class="btn">Comenzar examen</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="examCard" class="card" hidden>
+        <div class="row" style="justify-content:space-between; align-items:flex-start">
+          <div>
+            <div class="pill" id="examMeta"></div>
+            <div class="question" id="examQ">…</div>
+          </div>
+          <div class="row">
+            <div class="pill" id="examCounter">0/0</div>
+            <div class="pill" id="examTimer" hidden>00:00</div>
+          </div>
+        </div>
+        <div class="answers" id="examAnswers"></div>
+        <div id="examFeedback" class="muted" style="margin-top:8px"></div>
+        <div class="row" style="margin-top:10px">
+          <button id="btnExamNext" class="btn secondary">Siguiente</button>
+          <button id="btnEndExam" class="btn danger">Terminar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- HISTORY -->
+    <section id="tab-history" class="grid2" hidden>
+      <div class="card">
+        <h3>Estadísticas rápidas</h3>
+        <div class="kpi">
+          <div class="box"><div class="muted">Sesiones</div><div id="kpiSessions" style="font-size:20px;font-weight:700">0</div></div>
+          <div class="box"><div class="muted">Media %</div><div id="kpiAvg" style="font-size:20px;font-weight:700">0%</div></div>
+          <div class="box"><div class="muted">Total aciertos</div><div id="kpiRight" style="font-size:20px;font-weight:700">0</div></div>
+          <div class="box"><div class="muted">Total fallos</div><div id="kpiWrong" style="font-size:20px;font-weight:700">0</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Historial de sesiones</h3>
+        <div id="historyList" class="grid2"></div>
+        <div id="historyEmpty" class="empty" hidden>Aún no hay sesiones.</div>
+        <div class="row" style="margin-top:8px">
+          <button id="btnExportResults" class="btn secondary">Exportar resultados (JSON)</button>
+          <button id="btnClearHistory" class="btn danger">Borrar historial</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="tab-settings" class="grid2" hidden>
+      <div class="card">
+        <h3>Preferencias</h3>
+        <div class="cols">
+          <div>
+            <label>Tema</label>
+            <select id="prefTheme">
+              <option value="auto">Automático</option>
+              <option value="dark">Oscuro</option>
+              <option value="light">Claro</option>
+            </select>
+          </div>
+          <div>
+            <label>Vibración (haptics)</label>
+            <select id="prefHaptics">
+              <option value="true">Activado</option>
+              <option value="false">Desactivado</option>
+            </select>
+          </div>
+          <div>
+            <label>PIN local (opcional)</label>
+            <input id="prefPIN" type="text" inputmode="numeric" maxlength="6" placeholder="Dejar vacío para desactivar" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button id="btnSavePrefs" class="btn">Guardar preferencias</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Acerca de</h3>
+        <div class="muted">Floppy Card PWA — Entrenador de rangos preflop (offline). Datos en IndexedDB, exportables en JSON.</div>
+      </div>
+    </section>
+
+    <!-- IMPORT / EXPORT -->
+    <section id="tab-importexport" class="grid2" hidden>
+      <div class="card">
+        <h3>Importar paquete de rangos (.json)</h3>
+        <input id="importFile" type="file" accept="application/json" />
+        <div class="row" style="margin-top:8px">
+          <button id="btnImport" class="btn">Importar</button>
+          <button id="btnSeed" class="btn secondary">Cargar ejemplos</button>
+        </div>
+        <p class="muted">El paquete debe seguir el esquema <code>RangePackage</code> (ver abajo).</p>
+      </div>
+      <div class="card">
+        <h3>Exportar</h3>
+        <div class="row">
+          <button id="btnExportRanges" class="btn secondary">Exportar rangos (JSON)</button>
+          <button id="btnExportAll" class="btn secondary">Exportar TODO (backup)</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Esquema de paquete JSON (ejemplo mínimo)</h3>
+        <pre class="code" id="schemaBlock"></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">© 2025 Floppy Card</footer>
+
+  <script>
+  // =========================
+  // SERVICE WORKER + PWA
+  // =========================
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(console.error);
+    });
+  }
+
+  let deferredPrompt = null;
+  const installBtn = document.getElementById("installBtn");
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.hidden = false;
+  });
+  installBtn?.addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    installBtn.hidden = true;
+    deferredPrompt = null;
+  });
+
+  // Online/Offline chip
+  const net = document.getElementById("netStatus");
+  function setNet(){ net.innerHTML = 'Estado: <strong>' + (navigator.onLine ? 'Online' : 'Offline') + '</strong>'; }
+  window.addEventListener("online", setNet);
+  window.addEventListener("offline", setNet);
+  setNet();
+
+  // =========================
+  // CONSTANTES / UTILIDADES
+  // =========================
+  const RANKS = ["A","K","Q","J","T","9","8","7","6","5","4","3","2"];
+  const ACTIONS = ["Fold","Call","Raise","3-bet","4-bet"];
+  const toKey = (a,b) => {
+    // Devuelve notación canónica: pares "AA", suited "A5s" (orden mayor-menor), off "KQo"
+    const ia = RANKS.indexOf(a), ib = RANKS.indexOf(b);
+    if (a===b) return a+a;
+    const suited = ia < ib ? a+b+"s" : b+a+"s"; // provisional
+    const offs   = ia < ib ? a+b+"o" : b+a+"o";
+    return {suited, offs};
+  };
+  const isPair = (k) => k.length===2 && k[0]===k[1];
+  const isSuited = (k) => k.endsWith("s");
+  const isOffs = (k) => k.endsWith("o");
+  const handLabel = (k) => k; // simple
+
+  const colorCode = (act) => {
+    if (!act) return "unknown";
+    const a = act.toLowerCase();
+    if (a.startsWith("mix")) return "MX";
+    if (a.startsWith("4")) return "B4";
+    if (a.startsWith("3")) return "B3";
+    if (a.startsWith("rai")) return "R";
+    if (a.startsWith("cal")) return "C";
+    if (a.startsWith("fol")) return "F";
+    return "unknown";
+  };
+
+  function downloadJSON(obj, filename){
+    const blob = new Blob([JSON.stringify(obj, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]];} return arr; }
+  function now(){ return Date.now(); }
+  function fmt(ts){ const d=new Date(ts); return d.toLocaleString([], {hour12:false, year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit"}); }
+
+  // =========================
+  // INDEXEDDB
+  // =========================
+  const DB_NAME="floppycard-db";
+  const ST_RANGES="ranges", ST_SESSIONS="sessions", ST_RESULTS="results", ST_PREFS="prefs", ST_CARDS="cards", ST_ERRORS="errors";
+  let db;
+
+  function openDB(){
+    return new Promise((resolve,reject)=>{
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = (e)=>{
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(ST_RANGES)){
+          const s=db.createObjectStore(ST_RANGES,{keyPath:"id"});
+          s.createIndex("by_meta",["format","stack_bb","position","scenario"],{unique:false});
+        }
+        if (!db.objectStoreNames.contains(ST_SESSIONS)) db.createObjectStore(ST_SESSIONS,{keyPath:"id"});
+        if (!db.objectStoreNames.contains(ST_RESULTS))  db.createObjectStore(ST_RESULTS,{keyPath:"id"});
+        if (!db.objectStoreNames.contains(ST_PREFS))    db.createObjectStore(ST_PREFS,{keyPath:"id"});
+        if (!db.objectStoreNames.contains(ST_CARDS))    db.createObjectStore(ST_CARDS,{keyPath:"id"});
+        if (!db.objectStoreNames.contains(ST_ERRORS))   db.createObjectStore(ST_ERRORS,{keyPath:"id", autoIncrement:true});
+      };
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror = ()=>reject(req.error);
+    });
+  }
+  async function withStore(name, mode, fn){
+    if (!db) db = await openDB();
+    return new Promise((resolve, reject)=>{
+      const tx=db.transaction(name, mode);
+      const store=tx.objectStore(name);
+      const ret=fn(store);
+      tx.oncomplete=()=>resolve(ret);
+      tx.onerror=()=>reject(tx.error);
+    });
+  }
+
+  // RANGES
+  const Ranges = {
+    put: (r) => withStore(ST_RANGES,"readwrite",s=>s.put(r)),
+    bulkPut: (arr)=> withStore(ST_RANGES,"readwrite",s=>arr.forEach(x=>s.put(x))),
+    all: () => new Promise(async (resolve,reject)=>{
+      try{
+        const out=[]; await withStore(ST_RANGES,"readonly",s=>{
+          const req=s.openCursor(); req.onsuccess=()=>{const c=req.result; if(c){out.push(c.value); c.continue();}else resolve(out);};
+        });
+      }catch(e){reject(e);}
+    }),
+    clear: ()=> withStore(ST_RANGES,"readwrite",s=>s.clear()),
+    get: (id)=> new Promise(async (resolve)=>{ await withStore(ST_RANGES,"readonly",s=>{ const req=s.get(id); req.onsuccess=()=>resolve(req.result||null);} );})
+  };
+  // PREFS
+  const Prefs = {
+    get: (id="prefs")=> new Promise(async (resolve)=>{ await withStore(ST_PREFS,"readonly",s=>{const r=s.get(id); r.onsuccess=()=>resolve(r.result||{id:"prefs", theme:"auto", haptics:true, pin:""});} );}),
+    set: (obj)=> withStore(ST_PREFS,"readwrite",s=>s.put(obj))
+  };
+  // SESSIONS / RESULTS
+  const Sessions = {
+    add: (ses)=> withStore(ST_SESSIONS,"readwrite",s=>s.put(ses)),
+    all: ()=> new Promise(async (resolve)=>{ const out=[]; await withStore(ST_SESSIONS,"readonly",s=>{const r=s.openCursor(null,"prev"); r.onsuccess=()=>{const c=r.result; if(c){out.push(c.value); c.continue();}else resolve(out);};});}),
+    clear: ()=> withStore(ST_SESSIONS,"readwrite",s=>s.clear())
+  };
+  const Results = {
+    add: (res)=> withStore(ST_RESULTS,"readwrite",s=>s.put(res)),
+    all: ()=> new Promise(async (resolve)=>{ const out=[]; await withStore(ST_RESULTS,"readonly",s=>{const r=s.openCursor(null,"prev"); r.onsuccess=()=>{const c=r.result; if(c){out.push(c.value); c.continue();}else resolve(out);};});}),
+    clear: ()=> withStore(ST_RESULTS,"readwrite",s=>s.clear())
+  };
+  const Cards = {
+    add: (card)=> withStore(ST_CARDS,"readwrite",s=>s.put(card)),
+    all: ()=> new Promise(async (resolve)=>{ const out=[]; await withStore(ST_CARDS,"readonly",s=>{const r=s.openCursor(null,"prev"); r.onsuccess=()=>{const c=r.result; if(c){out.push(c.value); c.continue();}else resolve(out);};});}),
+    clear: ()=> withStore(ST_CARDS,"readwrite",s=>s.clear())
+  };
+  const ErrorsQ = {
+    push: (ex)=> withStore(ST_ERRORS,"readwrite",s=>s.add({ts:now(), ex})),
+    popAll: ()=> new Promise(async (resolve)=>{ const out=[]; await withStore(ST_ERRORS,"readwrite",s=>{const r=s.openCursor(); r.onsuccess=()=>{const c=r.result; if(c){ out.push(c.value.ex); s.delete(c.key); c.continue(); } else resolve(out);};});})
+  };
+
+  // =========================
+  // SEED / ESQUEMA
+  // =========================
+  const RANGE_PACKAGE_SCHEMA = {
+    package: {
+      id: "string-uuid",
+      name: "string",
+      version: "string",
+      format: "cash|mtt",
+      table_size: 6,
+      author: "string",
+      created_at: 0
+    },
+    ranges: [
+      {
+        id: "string-uuid",
+        title: "RFI CO 100BB 6-max",
+        format: "cash",
+        table_size: 6,
+        stack_bb: 100,
+        position: "CO",
+        scenario: "RFI",
+        villain_position: null,
+        encoding: "list",
+        combos: { "A5s":"Raise", "KQo":"Fold", "TT":"Raise" },
+        notes: "Demo",
+        source: "seed",
+        version: "1.0.0",
+        created_at: 0, updated_at: 0
+      }
+    ]
+  };
+
+  // Seed de ejemplo (mínimo pero funcional)
+  const SEED = {
+    package: { id:"seed-0001", name:"Seed Cash 100BB", version:"1.0.0", format:"cash", table_size:6, author:"Floppy", created_at:now() },
+    ranges: [
+      // RFI CO 100BB
+      {
+        id:"r-seed-rfi-co-100",
+        title:"RFI CO 100BB (6-max)",
+        format:"cash", table_size:6, stack_bb:100,
+        position:"CO", scenario:"RFI", villain_position:null,
+        encoding:"list",
+        combos:{
+          "AA":"Raise","KK":"Raise","QQ":"Raise","JJ":"Raise","TT":"Raise","99":"Raise","88":"Raise",
+          "AKs":"Raise","AQs":"Raise","AJs":"Raise","ATs":"Raise","KQs":"Raise","KJs":"Raise","QJs":"Raise",
+          "A5s":"Raise","A4s":"Raise","A3s":"Raise","A2s":"Raise",
+          "KTs":"Raise","QTs":"Raise","JTs":"Raise","T9s":"Raise","98s":"Raise",
+          "AKo":"Raise","AQo":"Raise","KQo":"Raise",
+          "A9s":"Call", "K9s":"Call", "Q9s":"Call", "J9s":"Call",
+          "AJo":"Call","KJo":"Fold","QJo":"Fold","ATo":"Fold","KTo":"Fold",
+          "77":"Call","66":"Call","55":"Fold","44":"Fold","33":"Fold","22":"Fold"
+        },
+        notes:"RFI standard CO 2.2–2.5x",
+        source:"demo", version:"1.0.0", created_at:now(), updated_at:now()
+      },
+      // Defensa BB vs BTN 100BB
+      {
+        id:"r-seed-bb-def-btn-100",
+        title:"BB vs BTN 100BB (6-max)",
+        format:"cash", table_size:6, stack_bb:100,
+        position:"BB", scenario:"defend_blind", villain_position:"BTN",
+        encoding:"list",
+        combos:{
+          "AA":"3-bet","KK":"3-bet","QQ":"3-bet","JJ":"3-bet","TT":"3-bet","99":"3-bet",
+          "AKs":"3-bet","AQs":"3-bet","AJs":"3-bet","KQs":"3-bet",
+          "A5s":"3-bet","A4s":"3-bet", "KJs":"Call","QJs":"Call","JTs":"Call","T9s":"Call","98s":"Call","87s":"Call",
+          "ATs":"Call","A9s":"Call","KTs":"Call","QTs":"Call","J9s":"Call",
+          "AKo":"3-bet","AQo":"3-bet","KQo":"Call","QJo":"Fold","KJo":"Fold","AJo":"Call","ATo":"Fold",
+          "77":"Call","66":"Call","55":"Call","44":"Fold","33":"Fold","22":"Fold"
+        },
+        notes:"Open BTN 2.2–2.5x; BB mix 3-bet/call", source:"demo", version:"1.0.0", created_at:now(), updated_at:now()
+      }
+    ]
+  };
+
+  // =========================
+  // UI STATE
+  // =========================
+  const tabsEl = document.getElementById("tabs");
+  const sections = {
+    ranges: document.getElementById("tab-ranges"),
+    practice: document.getElementById("tab-practice"),
+    exam: document.getElementById("tab-exam"),
+    history: document.getElementById("tab-history"),
+    settings: document.getElementById("tab-settings"),
+    importexport: document.getElementById("tab-importexport")
+  };
+  tabsEl.addEventListener("click", (e)=>{
+    const b = e.target.closest("button.tab"); if(!b) return;
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    b.classList.add("active");
+    const key=b.dataset.tab;
+    Object.entries(sections).forEach(([k,el])=> el.hidden = (k!==key));
+    if (key==="history") loadHistory();
+    if (key==="ranges") refreshRangesUI();
+    if (key==="settings") loadPrefs();
+    if (key==="practice") syncActiveRangeSelectors();
+    if (key==="exam") syncActiveRangeSelectors();
+  });
+
+  // RANGES FILTERS + LIST + MATRIX
+  const filterFormat = document.getElementById("filterFormat");
+  const filterStack = document.getElementById("filterStack");
+  const filterPos = document.getElementById("filterPos");
+  const filterScenario = document.getElementById("filterScenario");
+  filterFormat.addEventListener("change", refreshRangesUI);
+  filterStack.addEventListener("change", refreshRangesUI);
+  filterPos.addEventListener("change", refreshRangesUI);
+  filterScenario.addEventListener("change", refreshRangesUI);
+
+  const rangesListEl = document.getElementById("rangesList");
+  const rangesEmptyEl = document.getElementById("rangesEmpty");
+  const rangeSelectEl = document.getElementById("rangeSelect");
+  const matrixWrap = document.getElementById("matrixWrap");
+  const btnActivateRange = document.getElementById("btnActivateRange");
+
+  btnActivateRange.addEventListener("click", async ()=>{
+    const id = rangeSelectEl.value;
+    const r = await Ranges.get(id);
+    if (!r) return alert("Selecciona un rango.");
+    localStorage.setItem("activeRangeId", r.id);
+    alert("Rango activo: " + r.title);
+    syncActiveRangeSelectors();
+  });
+
+  async function refreshRangesUI(){
+    const all = await Ranges.all();
+    const filtered = all.filter(r=>{
+      if (filterFormat.value!=="all" && r.format!==filterFormat.value) return false;
+      if (filterStack.value!=="all" && String(r.stack_bb)!==filterStack.value) return false;
+      if (filterPos.value!=="all" && r.position!==filterPos.value) return false;
+      if (filterScenario.value!=="all" && r.scenario!==filterScenario.value) return false;
+      return true;
+    });
+    // list cards
+    rangesListEl.innerHTML = filtered.map(r=>`
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <strong>${r.title}</strong>
+            <div class="muted">${r.format.toUpperCase()} • ${r.table_size}-max • ${r.stack_bb}BB • ${r.position} • ${r.scenario}${r.villain_position?(" vs "+r.villain_position):""}</div>
+            <div class="muted">${r.notes||""}</div>
+          </div>
+          <div class="row">
+            <button class="btn secondary" data-view="${r.id}">Ver grilla</button>
+            <button class="btn" data-activate="${r.id}">Activar</button>
+          </div>
+        </div>
+      </div>
+    `).join("");
+    rangesEmptyEl.hidden = filtered.length>0;
+
+    // select
+    rangeSelectEl.innerHTML = all.map(r=>`<option value="${r.id}">${r.title}</option>`).join("");
+    const current = localStorage.getItem("activeRangeId");
+    if (current && all.find(x=>x.id===current)) rangeSelectEl.value = current;
+
+    // Bind buttons
+    rangesListEl.querySelectorAll("button").forEach(b=>{
+      if (b.dataset.view) b.addEventListener("click", ()=>{ rangeSelectEl.value=b.dataset.view; renderMatrixById(b.dataset.view); });
+      if (b.dataset.activate) b.addEventListener("click", async ()=>{ localStorage.setItem("activeRangeId", b.dataset.activate); alert("Rango activo actualizado."); syncActiveRangeSelectors(); });
+    });
+
+    // draw selected
+    if (rangeSelectEl.value) renderMatrixById(rangeSelectEl.value);
+    else if (all[0]) { rangeSelectEl.value=all[0].id; renderMatrixById(all[0].id); }
+  }
+
+  function actionOf(range, k){
+    // Devuelve acción para la mano k
+    if (!range || !range.combos) return null;
+    if (range.combos[k]) return range.combos[k];
+    // intentar deducir: si k es off/suited/pareja
+    return null; // sin dato -> unknown
+  }
+
+  function renderMatrixById(id){
+    Ranges.get(id).then(r=>{
+      if (!r){ matrixWrap.innerHTML="<div class='empty'>Rango no encontrado.</div>"; return; }
+      const headerRow = `<tr><th class="hdr"></th>${RANKS.map(x=>`<th class="hdr">${x}</th>`).join("")}</tr>`;
+      let rows="";
+      for (let i=0;i<RANKS.length;i++){
+        const ri=RANKS[i];
+        let cells=`<th class="hdr">${ri}</th>`;
+        for (let j=0;j<RANKS.length;j++){
+          const rj=RANKS[j];
+          let key;
+          if (i===j) key = ri+ri;
+          else if (i<j) key = ri+rj+"s"; else key = rj+ri+"o";
+          const act = actionOf(r,key);
+          const cls = colorCode(act);
+          cells += `<td class="${cls}" data-key="${key}" title="${key} → ${act||'—'}">${key}</td>`;
+        }
+        rows += `<tr>${cells}</tr>`;
+      }
+      matrixWrap.innerHTML = `<table class="matrix">${headerRow}${rows}</table>`;
+      matrixWrap.querySelectorAll("td").forEach(td=>{
+        td.addEventListener("click", ()=>{
+          const k = td.dataset.key;
+          const act = actionOf(r,k) || "Sin dato";
+          alert(`${r.title}\nMano: ${k}\nAcción: ${act}`);
+        });
+      });
+    });
+  }
+
+  // =========================
+  // PRACTICE / EXAM ENGINE
+  // =========================
+  const hapticsOn = ()=> (window._prefs?.haptics && navigator.vibrate) ? navigator.vibrate(20) : null;
+
+  function metaLabel(r){ return `${r.position} • ${r.scenario}${r.villain_position?(" vs "+r.villain_position):""} • ${r.stack_bb}BB`; }
+  function optionsFor(range){
+    const set = new Set(Object.values(range.combos || {}).map(x=>x.split(" ")[0]));
+    const list = Array.from(set);
+    // Asegura 3–5 opciones
+    const base = ["Fold","Call","Raise","3-bet","4-bet"].filter(x=>!set.has(x));
+    while (list.length<3 && base.length) list.push(base.shift());
+    return list.slice(0,5);
+  }
+  function randChoice(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+  // Build exercises from a range
+  function buildExercise(range){
+    const keys = Object.keys(range.combos||{});
+    if (!keys.length) return null;
+    const hand = randChoice(keys);
+    const correct = (range.combos[hand]||"").split(" ")[0] || "Fold";
+    const opts = shuffle([correct, ...optionsFor(range).filter(x=>x!==correct)]).slice(0,Math.max(3,Math.min(5,Object.keys(range.combos).length)));
+    return {
+      id: crypto.randomUUID(),
+      range_id: range.id,
+      hand, correct, options: opts,
+      question: `${range.title}: ¿acción con ${hand}?`,
+      meta: metaLabel(range)
+    };
+  }
+
+  // --- Practice UI
+  const practiceMeta = document.getElementById("practiceMeta");
+  const qText = document.getElementById("qText");
+  const answersEl = document.getElementById("answers");
+  const feedbackEl = document.getElementById("feedback");
+  const qCounter = document.getElementById("qCounter");
+  const practiceCard = document.getElementById("practiceCard");
+  const btnStartPractice = document.getElementById("btnStartPractice");
+  const btnReviewErrors = document.getElementById("btnReviewErrors");
+  const btnNext = document.getElementById("btnNext");
+  const btnEndPractice = document.getElementById("btnEndPractice");
+  const activeRangeSelect = document.getElementById("activeRangeSelect");
+  const examRangeSelect = document.getElementById("examRangeSelect");
+
+  function syncActiveRangeSelectors(){
+    Ranges.all().then(all=>{
+      const opts = all.map(r=>`<option value="${r.id}">${r.title}</option>`).join("");
+      activeRangeSelect.innerHTML = opts;
+      examRangeSelect.innerHTML = opts;
+      const id = localStorage.getItem("activeRangeId");
+      if (id && all.find(x=>x.id===id)){ activeRangeSelect.value=id; examRangeSelect.value=id; }
+      else if (all[0]){ activeRangeSelect.value=all[0].id; examRangeSelect.value=all[0].id; localStorage.setItem("activeRangeId", all[0].id); }
+    });
+  }
+
+  let pracState=null;
+  function startPractice(usingRange, seedErrors=null){
+    pracState = {
+      range: usingRange,
+      total: 0, right:0, wrong:0, current:null, queueErrors: seedErrors||[]
+    };
+    practiceCard.hidden=false;
+    nextPractice();
+  }
+  function nextPractice(){
+    let ex = null;
+    if (pracState.queueErrors.length) ex = pracState.queueErrors.shift();
+    else ex = buildExercise(pracState.range);
+    if (!ex){ alert("No hay ejercicios disponibles."); return; }
+    pracState.current = {ex, start:now(), answered:false};
+    practiceMeta.textContent = ex.meta;
+    qText.textContent = ex.question;
+    qCounter.textContent = `${pracState.right+pracState.wrong}/${pracState.right+pracState.wrong+1}`;
+    answersEl.innerHTML = ex.options.map(o=>`<button class="btn" data-a="${o}">${o}</button>`).join("");
+    feedbackEl.textContent = "";
+  }
+  answersEl.addEventListener("click", async (e)=>{
+    const b = e.target.closest("button[data-a]"); if(!b || !pracState?.current || pracState.current.answered) return;
+    const ans = b.dataset.a; const {ex,start} = pracState.current;
+    const ok = ans===ex.correct;
+    pracState.current.answered = true;
+    pracState.total++;
+    if (ok){ pracState.right++; feedbackEl.textContent = "✅ Correcto"; }
+    else { pracState.wrong++; feedbackEl.textContent = `❌ Incorrecto (correcta: ${ex.correct})`; await ErrorsQ.push(ex); }
+    hapticsOn();
+    await Cards.add({id:crypto.randomUUID(), ts:now(), type:"practice", range_id:ex.range_id, hand:ex.hand, user_answer:ans, correct:ex.correct, is_correct:ok, time_ms: now()-start});
+  });
+  btnStartPractice.addEventListener("click", async ()=>{
+    const r = await Ranges.get(activeRangeSelect.value);
+    if (!r) return alert("Selecciona un rango.");
+    startPractice(r, null);
+  });
+  btnReviewErrors.addEventListener("click", async ()=>{
+    const errs = await ErrorsQ.popAll();
+    if (!errs.length) return alert("No hay errores en la cola.");
+    const r = await Ranges.get(activeRangeSelect.value);
+    startPractice(r, errs);
+  });
+  btnNext.addEventListener("click", ()=> nextPractice());
+  btnEndPractice.addEventListener("click", ()=> { practiceCard.hidden=true; pracState=null; alert("Sesión de práctica terminada."); });
+
+  // --- Exam UI
+  const examCard = document.getElementById("examCard");
+  const examQ = document.getElementById("examQ");
+  const examAnswers = document.getElementById("examAnswers");
+  const examFeedback = document.getElementById("examFeedback");
+  const examCounter = document.getElementById("examCounter");
+  const examTimerEl = document.getElementById("examTimer");
+  const btnStartExam = document.getElementById("btnStartExam");
+  const btnExamNext = document.getElementById("btnExamNext");
+  const btnEndExam = document.getElementById("btnEndExam");
+  const examCount = document.getElementById("examCount");
+  const examMinutes = document.getElementById("examMinutes");
+
+  let examState=null, examTimer=null, examDeadline=0;
+  function startExam(usingRange, n, minutes){
+    const items = [];
+    for(let i=0;i<n;i++){ const ex=buildExercise(usingRange); if(ex) items.push(ex); }
+    if (!items.length) return alert("No hay preguntas disponibles.");
+    examState={range:usingRange, items, idx:0, right:0, wrong:0, answers:[]};
+    examCard.hidden=false; renderExam();
+    if (minutes>0){ examDeadline = now() + minutes*60*1000; examTimerEl.hidden=false; tickTimer(); examTimer = setInterval(tickTimer, 250); }
+  }
+  function tickTimer(){
+    const left = Math.max(0, examDeadline - now());
+    const mm = String(Math.floor(left/60000)).padStart(2,"0");
+    const ss = String(Math.floor((left%60000)/1000)).padStart(2,"0");
+    examTimerEl.textContent = `${mm}:${ss}`;
+    if (left<=0){ clearInterval(examTimer); finishExam(); }
+  }
+  function renderExam(){
+    const ex = examState.items[examState.idx];
+    examQ.textContent = ex.question + "  (" + metaLabel(examState.range) + ")";
+    examCounter.textContent = `${examState.idx+1}/${examState.items.length}`;
+    examAnswers.innerHTML = ex.options.map(o=>`<button class="btn" data-a="${o}">${o}</button>`).join("");
+    examFeedback.textContent = "";
+  }
+  examAnswers.addEventListener("click", (e)=>{
+    const b=e.target.closest("button[data-a]"); if(!b || !examState) return;
+    const ex = examState.items[examState.idx];
+    const ans = b.dataset.a; const ok = ans===ex.correct;
+    if (ok){ examState.right++; examFeedback.textContent="✅ Correcto"; }
+    else { examState.wrong++; examFeedback.textContent=`❌ Incorrecto (correcta: ${ex.correct})`; ErrorsQ.push(ex); }
+    hapticsOn();
+    examState.answers.push({id:crypto.randomUUID(), ts:now(), range_id:ex.range_id, hand:ex.hand, user_answer:ans, correct:ex.correct, is_correct:ok});
+  });
+  btnExamNext.addEventListener("click", ()=>{
+    if (!examState) return;
+    if (examState.idx < examState.items.length-1){ examState.idx++; renderExam(); }
+    else { finishExam(); }
+  });
+  btnEndExam.addEventListener("click", ()=> finishExam());
+  function finishExam(){
+    if (!examState) return;
+    if (examTimer) clearInterval(examTimer);
+    const total = examState.items.length, score = Math.round(100*examState.right/Math.max(1,total));
+    const sessionId = crypto.randomUUID();
+    Sessions.add({id:sessionId, mode:"exam", range_id:examState.range.id, ts:now(), total, right:examState.right, wrong:examState.wrong, score});
+    Results.add({id:crypto.randomUUID(), session_id:sessionId, data:examState.answers});
+    alert(`Examen finalizado.\nPuntuación: ${score}% (${examState.right}/${total})`);
+    examCard.hidden=true; examState=null;
+  }
+  btnStartExam.addEventListener("click", async ()=>{
+    const r=await Ranges.get(examRangeSelect.value); if(!r) return alert("Selecciona un rango.");
+    const n=parseInt(examCount.value||"20",10); const m=parseInt(examMinutes.value||"0",10);
+    startExam(r, n, m);
+  });
+
+  // =========================
+  // HISTORY / STATS
+  // =========================
+  const kpiSessions=document.getElementById("kpiSessions");
+  const kpiAvg=document.getElementById("kpiAvg");
+  const kpiRight=document.getElementById("kpiRight");
+  const kpiWrong=document.getElementById("kpiWrong");
+  const historyList=document.getElementById("historyList");
+  const historyEmpty=document.getElementById("historyEmpty");
+  const btnExportResults=document.getElementById("btnExportResults");
+  const btnClearHistory=document.getElementById("btnClearHistory");
+
+  async function loadHistory(){
+    const ses = await Sessions.all();
+    const res = await Results.all();
+    kpiSessions.textContent = ses.length;
+    const avg = ses.reduce((a,s)=>a+(s.score||0),0)/Math.max(1,ses.length);
+    kpiAvg.textContent = `${Math.round(avg)}%`;
+    let tr=0, tw=0; ses.forEach(s=>{tr+=s.right||0; tw+=s.wrong||0;}); kpiRight.textContent=tr; kpiWrong.textContent=tw;
+
+    historyList.innerHTML = ses.map(s=>{
+      const r = s.range_id;
+      return `<div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <strong>${s.mode.toUpperCase()} — ${s.score||0}%</strong>
+            <div class="muted">${fmt(s.ts)} • Rango: ${r}</div>
+            <div class="muted">Aciertos ${s.right||0} / Fallos ${s.wrong||0} (Total ${s.total||0})</div>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+    historyEmpty.hidden = ses.length>0;
+  }
+  btnExportResults.addEventListener("click", async ()=>{
+    const ses = await Sessions.all(); const res = await Results.all(); const cards = await Cards.all();
+    downloadJSON({sessions:ses, results:res, cards}, "floppycard_resultados.json");
+  });
+  btnClearHistory.addEventListener("click", async ()=>{
+    if (!confirm("¿Borrar TODO el historial (sesiones, resultados, tarjetas)?")) return;
+    await Sessions.clear(); await Results.clear(); await Cards.clear();
+    loadHistory();
+  });
+
+  // =========================
+  // SETTINGS
+  // =========================
+  const prefTheme=document.getElementById("prefTheme");
+  const prefHaptics=document.getElementById("prefHaptics");
+  const prefPIN=document.getElementById("prefPIN");
+  const btnSavePrefs=document.getElementById("btnSavePrefs");
+  window._prefs = {theme:"auto", haptics:true, pin:""};
+
+  function applyTheme(mode){
+    if (mode==="dark") document.documentElement.style.colorScheme="dark";
+    else if (mode==="light") document.documentElement.style.colorScheme="light";
+    else document.documentElement.style.colorScheme="normal";
+  }
+
+  async function loadPrefs(){
+    const p = await Prefs.get();
+    window._prefs = p;
+    prefTheme.value = p.theme||"auto";
+    prefHaptics.value = String(p.haptics!==false);
+    prefPIN.value = p.pin||"";
+    applyTheme(p.theme||"auto");
+  }
+  btnSavePrefs.addEventListener("click", async ()=>{
+    const p = {id:"prefs", theme:prefTheme.value, haptics:(prefHaptics.value==="true"), pin:prefPIN.value.trim()};
+    await Prefs.set(p);
+    window._prefs = p;
+    applyTheme(p.theme);
+    alert("Preferencias guardadas.");
+  });
+
+  // =========================
+  // IMPORT / EXPORT
+  // =========================
+  const importFile=document.getElementById("importFile");
+  const btnImport=document.getElementById("btnImport");
+  const btnSeed=document.getElementById("btnSeed");
+  const btnExportRanges=document.getElementById("btnExportRanges");
+  const btnExportAll=document.getElementById("btnExportAll");
+  const schemaBlock=document.getElementById("schemaBlock");
+  schemaBlock.textContent = JSON.stringify(RANGE_PACKAGE_SCHEMA, null, 2);
+
+  btnSeed.addEventListener("click", async ()=>{
+    await Ranges.bulkPut(SEED.ranges);
+    localStorage.setItem("activeRangeId", SEED.ranges[0].id);
+    alert("Rangos de ejemplo cargados.");
+    refreshRangesUI(); syncActiveRangeSelectors();
+  });
+
+  btnImport.addEventListener("click", async ()=>{
+    const f = importFile.files?.[0]; if(!f) return alert("Selecciona un archivo .json");
+    try{
+      const text = await f.text(); const pkg = JSON.parse(text);
+      if (!pkg.ranges || !Array.isArray(pkg.ranges)) throw new Error("Estructura inválida: falta 'ranges'.");
+      // normaliza tiempos
+      pkg.ranges.forEach(r=>{ r.created_at = r.created_at || now(); r.updated_at = r.updated_at || now(); if(!r.id) r.id=crypto.randomUUID(); });
+      await Ranges.bulkPut(pkg.ranges);
+      alert(`Importados ${pkg.ranges.length} rangos.`);
+      refreshRangesUI(); syncActiveRangeSelectors();
+    }catch(err){ alert("Error importando: "+err.message); }
+  });
+
+  btnExportRanges.addEventListener("click", async ()=>{
+    const ranges = await Ranges.all();
+    const pkg = { package: { id: crypto.randomUUID(), name:"Export Floppy Card", version:"1.0", format:"mixed", table_size:6, author:"you", created_at:now() }, ranges };
+    downloadJSON(pkg, "floppycard_rangos.json");
+  });
+
+  btnExportAll.addEventListener("click", async ()=>{
+    const ranges = await Ranges.all();
+    const sessions = await Sessions.all();
+    const results = await Results.all();
+    const cards = await Cards.all();
+    const prefs = await Prefs.get();
+    downloadJSON({ranges,sessions,results,cards,prefs}, "floppycard_backup.json");
+  });
+
+  // =========================
+  // BOOT
+  // =========================
+  (async function boot(){
+    await openDB();
+    await loadPrefs();
+    const current = (await Ranges.all()).length;
+    if (!current){ // primera vez: cargar seed para que funcione out-of-the-box
+      await Ranges.bulkPut(SEED.ranges);
+      localStorage.setItem("activeRangeId", SEED.ranges[0].id);
+    }
+    refreshRangesUI();
+    syncActiveRangeSelectors();
+
+    // Lock por PIN (simple)
+    const p = await Prefs.get();
+    if (p.pin){
+      let tryPin = prompt("Introduce PIN para desbloquear:");
+      if (tryPin!==p.pin){
+        alert("PIN incorrecto.");
+        window.location.reload();
+      }
+    }
+  })();
+  </script>
+</body>
+</html>
